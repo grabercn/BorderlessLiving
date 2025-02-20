@@ -1,0 +1,114 @@
+/* Global CSS Variables */
+:root {
+    --primary-color: #C175FF;
+    --primary-hover: #A05FE6;
+    --secondary-color: #1890ff;
+    --text-color: #333;
+    --body-font: 'Roboto', sans-serif;
+    --heading-font: 'Montserrat', sans-serif;
+  }
+  
+  /* Global Resets */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Body Styling */
+  body {
+    font-family: var(--body-font);
+    color: var(--text-color);
+    background-color: #fff;
+    line-height: 1.6;
+  }
+  
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--heading-font);
+    color: var(--text-color);
+  }
+  
+  /* Purple Text Utility */
+  .text-purple {
+    color: var(--primary-color) !important;
+  }
+  
+  /* Button Styles */
+  .ant-btn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+    font-family: var(--body-font);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  .ant-btn:hover,
+  .ant-btn:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+  
+  /* Ant Design Menu Overrides */
+  .ant-menu {
+    font-family: var(--body-font);
+    color: var(--text-color);
+  }
+  
+  .ant-menu a {
+    color: var(--secondary-color);
+    font-weight: 500;
+  }
+  
+  .ant-menu-item:hover,
+  .ant-menu-submenu-title:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Link Styling */
+  a {
+    color: var(--secondary-color);
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Paragraph and Typography */
+  p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  
+  small,
+  .small-text {
+    font-size: 0.875rem;
+  }
+  
+  /* Card Styling */
+  .ant-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Drawer Content */
+  .ant-drawer-content {
+    font-family: var(--body-font);
+  }
+  
+  /* Modal Content */
+  .ant-modal-content {
+    font-family: var(--body-font);
+  }
+  
+  /* Utility to Hide Scrollbars */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
