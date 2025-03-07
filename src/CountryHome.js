@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Drawer, Button, Menu } from 'antd';
-import Icon, { MenuOutlined } from '@ant-design/icons';
+import { MenuOutlined } from '@ant-design/icons';
 import { Map, Marker } from 'pigeon-maps';
 import { motion } from 'framer-motion';
 import CountryDetail from './CountryDetail';
@@ -27,7 +27,7 @@ const CountryHome = () => {
   const [center, setCenter] = useState([46.603354, 1.888334]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [welcomeVisible, setWelcomeVisible] = useState(true);
-  const [mapStyle, setMapStyle] = useState('simplified');
+  const [mapStyle, setMapStyle] = useState('standard');
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [notes, setNotes] = useState([]);
@@ -92,6 +92,24 @@ const CountryHome = () => {
     reader.readAsText(file);
   };  
 
+  const handleMapTypeToggle = () => {
+    // Cycle through the map types on each click
+    switch (mapStyle) {
+      case 'standard':
+        setMapStyle('satellite');
+        break;
+      case 'satellite':
+        setMapStyle('simplified');
+        break;
+      case 'simplified':
+        setMapStyle('standard');
+        break;
+      default:
+        setMapStyle('standard');
+        break;
+    }
+  };
+
   const renderDrawerContent = () => (
     <motion.div
       initial={{ opacity: 0, x: -50 }}
@@ -121,25 +139,33 @@ const CountryHome = () => {
         <Menu.Item key="about">
           <a href="/about" style={{ fontSize: 18, color: '#1890ff' }}>About</a>
         </Menu.Item>
-  
-        {/* Manual Export Notes button */}
-        <Menu.Item key="export" onClick={exportNotes} >
-          Export Notes
+
+        {/* Settings Submenu */}
+        <SubMenu key="settings" title="Settings">
+        <Menu.Item key="type" onClick={() => handleMapTypeToggle()}>
+            Toggle Map Type: {mapStyle}
         </Menu.Item>
-  
-        {/* Manual Import Notes with hidden input */}
-        <Menu.Item key="import">
-          <label htmlFor="importNotes" >
-            Import Notes
-          </label>
-          <input
-            id="importNotes"
-            type="file"
-            accept="application/json"
-            style={{ display: 'none' }}
-            onChange={importNotes}
-          />
-        </Menu.Item>
+          
+
+          {/* Manual Export Notes button */}
+          <Menu.Item key="export" onClick={exportNotes} >
+            Export Notes
+          </Menu.Item>
+
+          {/* Manual Import Notes with hidden input */}
+          <Menu.Item key="import">
+            <label htmlFor="importNotes" >
+              Import Notes
+            </label>
+            <input
+              id="importNotes"
+              type="file"
+              accept="application/json"
+              style={{ display: 'none' }}
+              onChange={importNotes}
+            />
+          </Menu.Item>
+        </SubMenu>
 
         {/* Countries Submenu */}
         <SubMenu key="countries" title="Countries List">
@@ -237,11 +263,11 @@ const CountryHome = () => {
     setContextMenuVisible(false);
   };  
 
-  const deleteNote = (noteId) => {
-    const updatedNotes = notes.filter(note => note.id !== noteId);
-    setNotes(updatedNotes);
-    localStorage.setItem('mapNotes', JSON.stringify(updatedNotes));
-  };  
+  //const deleteNote = (noteId) => {
+  //  const updatedNotes = notes.filter(note => note.id !== noteId);
+  //  setNotes(updatedNotes);
+  //  localStorage.setItem('mapNotes', JSON.stringify(updatedNotes));
+  //};  
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
@@ -336,7 +362,7 @@ const CountryHome = () => {
           </Button>
         </center>
       </Modal>
-
+  
       <Map 
         center={center} 
         zoom={currentZoom} 
@@ -402,7 +428,6 @@ const CountryHome = () => {
           const groupColor = `hsl(${(note.stackId * 50) % 360}, 70%, 60%)`; // Dynamically generate colors for each group based on stackId
 
           // Icon size based on zoom level
-          const iconSize = 24 * (currentZoom / 4);
           const noteSize = Math.max(14, 10 + (currentZoom / 4)); // Adjust the note's font size based on zoom level
 
           return (
