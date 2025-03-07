@@ -112,3 +112,20 @@
     -ms-overflow-style: none;
   }
   
+  .pigeon-map-container {
+    position: relative;
+}
+
+.pigeon-map-container canvas {
+    pointer-events: auto; /* Default (should allow interaction) */
+}
+
+.custom-marker {
+    position: absolute;
+    cursor: pointer;
+    pointer-events: auto; /* Make sure markers aren't blocked */
+}
+
+.ant-modal {
+  z-index: 3000; /* Ensure it appears above the map */
+}
