@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Drawer, Button, Menu } from 'antd';
-import { MenuOutlined } from '@ant-design/icons';
+import { MenuOutlined, StarOutlined } from '@ant-design/icons';
 import { Map, Marker } from 'pigeon-maps';
 import { motion } from 'framer-motion';
 import CountryDetail from './CountryDetail';
@@ -31,6 +31,7 @@ const CountryHome = () => {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [notes, setNotes] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [contextMenuLatLng, setContextMenuLatLng] = useState(null); // New state to store map coordinates
 
 
@@ -77,20 +78,37 @@ const CountryHome = () => {
   const importNotes = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
+    // File type validation (optional, as you already have accept="application/json")
+    if (file.type !== "application/json") {
+        alert("Please select a valid JSON file.");
+        return;
+    }
+
     const reader = new FileReader();
+
     reader.onload = (event) => {
       try {
         const importedNotes = JSON.parse(event.target.result);
+
+        // Basic structural validation (optional, adjust to match your actual note structure)
+        if (!Array.isArray(importedNotes)) {
+            throw new Error("Invalid file format: Expected an array of notes.");
+        }
+
         setNotes(importedNotes);
         localStorage.setItem('mapNotes', JSON.stringify(importedNotes));
       } catch (err) {
-        alert('Invalid file format');
+          console.error("Error importing notes:", err);
+          alert("Failed to import notes. Please ensure the file is a valid JSON file with the correct format.");
       }
     };
-  
+    reader.onerror = () => {
+        alert("Error reading file. Please try again.");
+    };
     reader.readAsText(file);
-  };  
+  };
+
 
   const handleMapTypeToggle = () => {
     // Cycle through the map types on each click
@@ -150,20 +168,21 @@ const CountryHome = () => {
 
           {/* Manual Export Notes button */}
           <Menu.Item key="export" onClick={exportNotes} >
-            Export Notes
-          </Menu.Item>
+            Export Notes (.json)
+          </Menu.Item> 
 
           {/* Manual Import Notes with hidden input */}
-          <Menu.Item key="import">
-            <label htmlFor="importNotes" >
-              Import Notes
-            </label>
+          <Menu.Item
+            key="import"
+            onClick={() => document.getElementById('importNotes').click()}  // Clicking the item triggers file input
+        >
+            Import Notes (.json)
             <input
-              id="importNotes"
-              type="file"
-              accept="application/json"
-              style={{ display: 'none' }}
-              onChange={importNotes}
+                id="importNotes"
+                type="file"
+                accept="application/json"
+                style={{ display: 'none' }}
+                onChange={importNotes}  // Handles file selection and loading
             />
           </Menu.Item>
         </SubMenu>
@@ -185,11 +204,34 @@ const CountryHome = () => {
         </SubMenu>
 
         {/* Notes Submenu */}
+        <SubMenu key="favorites" title="Favorites">
+          <Menu.Item 
+            onClick={() => {
+              removeAllNotes();
+            }}
+            style={{ fontSize: 16, color: 'red' }}
+          >
+            Delete All Favorites
+          </Menu.Item>
+            
+          {favorites.map((favorite) => (
+            <Menu.Item 
+              key={favorite.id} 
+              onClick={() => {
+                setDrawerVisible(false);
+              }}
+              style={{ fontSize: 16 }}
+            >
+              {favorite.name + favorite.date}
+            </Menu.Item>
+          ))}
+        </SubMenu>
+
+        {/* Notes Submenu */}
         <SubMenu key="notes" title="Notes List">
           <Menu.Item 
             onClick={() => {
               removeAllNotes();
-              setDrawerVisible(false);
             }}
             style={{ fontSize: 16, color: 'red' }}
           >
@@ -269,6 +311,23 @@ const CountryHome = () => {
   //  setNotes(updatedNotes);
   //  localStorage.setItem('mapNotes', JSON.stringify(updatedNotes));
   //};  
+
+  const addFavorite = () => {
+    if (!contextMenuLatLng) return; // Ensure coords are available
+  
+    const newFavorite = {
+      id: Date.now(),
+      latLng: contextMenuLatLng, // Save actual coordinates
+      text: "New note",
+      icon: <StarOutlined />,
+      date: new Date().toLocaleString(),
+    };
+  
+    const updatedFavorites = [...favorites, newFavorite];
+    setNotes(updatedNotes);
+    localStorage.setItem('favorites', JSON.stringify(updatedNotes));
+    setContextMenuVisible(false);
+  }; 
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
@@ -526,6 +585,7 @@ const CountryHome = () => {
           onClick={() => setContextMenuVisible(false)} // Hide when clicking on the menu itself
         >
           <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addNote}>New Note</div>
+          <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addFavorite}>Mark as Favorite</div>
         </div>
       )}
 
