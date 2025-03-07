@@ -119,11 +119,12 @@ const CountryHome = () => {
     >
       <div style={{ marginBottom: 20, textAlign: 'center' }}>
         <img 
-          src="https://via.placeholder.com/100" 
+          src="/images/logo-nobg.png" 
           alt="Brand Logo" 
-          style={{ borderRadius: '50%' }} 
+          width={"200vw"}
+          height={"200vw"}
+          style={{ borderRadius: '50%'}} 
         />
-        <h2 style={{ marginTop: 10, color: '#C175FF' }}>Borderless Living</h2>
         <p style={{ fontSize: 14, color: '#555' }}>
           Your guide to living beyond borders.
         </p>
