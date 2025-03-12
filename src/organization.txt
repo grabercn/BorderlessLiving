@@ -1,0 +1,14 @@
+How It Works
+CountryHome.js
+This container holds your shared state (like the selected country, notes, favorites, map settings, etc.) and passes callbacks and data as props to the DrawerMenu and MapComponent.
+It also handles the welcome and country detail modals.
+
+DrawerMenu.js
+This component encapsulates your side menu logic using Ant Design’s Menu and a bit of Framer Motion for animation. 
+It accepts props for settings (like toggling map type and note import/export) and for displaying lists (countries, favorites, and notes). 
+It also calls a provided onCloseDrawer callback when items are clicked.
+
+MapComponent.js
+This component renders the map using pigeon-maps. 
+It displays country markers (using flags) and note markers (with grouping logic) and handles map events like click and bounds changes. 
+All map-related properties (center, zoom, etc.) and callbacks are passed from CountryHome.
