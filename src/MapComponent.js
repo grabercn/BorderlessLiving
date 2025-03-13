@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import ReactDOMServer from 'react-dom/server';
-import { StarOutlined, EnvironmentTwoTone, StarTwoTone } from '@ant-design/icons';
+import { EnvironmentTwoTone, StarTwoTone } from '@ant-design/icons';
 
 // A helper component to listen to map events
 const LeafletMapEvents = ({ onMapClick, setCenter, setCurrentZoom }) => {
