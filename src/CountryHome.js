@@ -10,7 +10,9 @@ import "./site.css";
 
 const CONFIG = {
   defaultCenter: [46.603354, 1.888334],
-  defaultZoom: 4,
+  defaultZoom: 6,
+  // CONFIG.tileProviders is no longer used directly by Leaflet,
+  // but we can map our mapStyle to a URL template in MapComponent.
   tileProviders: {
     satellite: (x, y, z) =>
       `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
@@ -43,7 +45,7 @@ const CountryHome = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load saved notes from local storage
+  // Load saved notes and favorites from local storage
   useEffect(() => {
     const savedNotes = JSON.parse(localStorage.getItem('mapNotes')) || [];
     const savedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
@@ -134,7 +136,7 @@ const CountryHome = () => {
     }
   };
 
-  // When user clicks on the map
+  // When user clicks on the map, record the click position for a context menu
   const handleMapClick = ({ event, latLng }) => {
     event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
@@ -271,7 +273,7 @@ const CountryHome = () => {
         </center>
       </Modal>
 
-      {/* Map Component */}
+      {/* Map Component using React-Leaflet */}
       <MapComponent 
         center={center}
         currentZoom={currentZoom}
