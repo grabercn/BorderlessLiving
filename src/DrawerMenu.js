@@ -12,6 +12,7 @@ const DrawerMenu = ({
   importNotes,
   removeAllNotes,
   removeAllFavorites,
+  handleFavoriteClick,
   uniqueCountries,
   handleCountryClick,
   favorites,
@@ -97,7 +98,10 @@ const DrawerMenu = ({
           {favorites.map((favorite) => (
             <Menu.Item 
               key={favorite.id} 
-              onClick={() => onCloseDrawer()}
+              onClick={() => {
+                handleFavoriteClick(favorite);
+                onCloseDrawer();
+              }}
               style={{ fontSize: 16 }}
             >
               {favorite.text} {favorite.date}

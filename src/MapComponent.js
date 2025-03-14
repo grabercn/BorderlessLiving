@@ -5,23 +5,25 @@ import 'leaflet/dist/leaflet.css';
 import ReactDOMServer from 'react-dom/server';
 import { EnvironmentTwoTone, StarTwoTone } from '@ant-design/icons';
 
-// A helper component to listen to map events
-const LeafletMapEvents = ({ onMapClick, setCenter, setCurrentZoom }) => {
+// Listen to map events and call onMapClick and onMapMove
+const LeafletMapEvents = ({ onMapClick, setCenter, setCurrentZoom, onMapMove }) => {
   useMapEvents({
     click(e) {
-      // Convert Leaflet’s latlng object to an array [lat, lng]
       onMapClick({ event: e.originalEvent, latLng: [e.latlng.lat, e.latlng.lng] });
     },
     moveend(e) {
       const map = e.target;
       setCenter([map.getCenter().lat, map.getCenter().lng]);
       setCurrentZoom(map.getZoom());
+      if (typeof onMapMove === "function") {
+        onMapMove();
+      }
     },
   });
   return null;
 };
 
-// A helper to create custom div icons
+// Helper to create custom div icons
 const createDivIcon = (html, width, height) => {
   return L.divIcon({
     html,
@@ -31,7 +33,7 @@ const createDivIcon = (html, width, height) => {
   });
 };
 
-// New component: When the center prop changes, update the map view
+// When center prop changes, update the map view
 const RecenterMap = ({ center }) => {
   const map = useMap();
   useEffect(() => {
@@ -54,8 +56,9 @@ const MapComponent = ({
   setCenter,
   setCurrentZoom,
   handleCountryClick,
+  onFavoriteClick,
+  onMapMove,  // Function to hide context menu on map move
 }) => {
-  // Choose tile URL based on mapStyle. For "standard", we use OpenStreetMap.
   let tileUrl =
     mapStyle === 'satellite'
       ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -63,7 +66,7 @@ const MapComponent = ({
       ? "https://cartodb-basemaps-a.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png"
       : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-  // Get the user's current location and update the center if found.
+  // Get user's current location and update the center if found.
   const [currentLocation, setCurrentLocation] = useState(null);
   useEffect(() => {
     if (navigator.geolocation) {
@@ -78,7 +81,6 @@ const MapComponent = ({
     }
   }, [setCenter]);
 
-  // We'll compute a common icon size for current location & favorites markers
   const currentIconSize = 24 * (currentZoom / 4);
 
   return (
@@ -89,11 +91,9 @@ const MapComponent = ({
       style={{ width: '100vw', height: '100vh' }}
       zoomControl={false}
     >
-      {/* Recenter map when center changes */}
       <RecenterMap center={center} />
-      
       <TileLayer url={tileUrl} attribution="&copy; OpenStreetMap contributors" />
-      <LeafletMapEvents onMapClick={onMapClick} setCenter={setCenter} setCurrentZoom={setCurrentZoom} />
+      <LeafletMapEvents onMapClick={onMapClick} setCenter={setCenter} setCurrentZoom={setCurrentZoom} onMapMove={onMapMove} />
 
       {/* Render country markers */}
       {countries.map((country, index) => {
@@ -118,7 +118,7 @@ const MapComponent = ({
         const stackedNotes = notes.filter((n) => n.stackId === note.stackId);
         const stackCount = stackedNotes.length;
         const isLatestNote = note.id === stackedNotes[stackedNotes.length - 1].id;
-        const showAllNotes = currentZoom >= 0; // always true in this case
+        const showAllNotes = currentZoom >= 0;
         const shouldShowLatestOnly = !showAllNotes && stackCount > 1 && !isLatestNote;
         const shouldShowNote = showAllNotes || !shouldShowLatestOnly;
         const groupColor = `hsl(${(note.stackId * 50) % 360}, 70%, 60%)`;
@@ -170,6 +170,15 @@ const MapComponent = ({
               key={favorite.id}
               position={favorite.latLng}
               icon={createDivIcon(html, iconSize + 16, iconSize + 16)}
+              eventHandlers={{
+                click: (e) => {
+                  e.originalEvent.preventDefault();
+                  e.originalEvent.stopPropagation();
+                  if (typeof onFavoriteClick === "function") {
+                    onFavoriteClick(favorite, { x: e.originalEvent.clientX, y: e.originalEvent.clientY });
+                  }
+                }
+              }}
             />
           );
         })}

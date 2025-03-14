@@ -11,8 +11,6 @@ import "./site.css";
 const CONFIG = {
   defaultCenter: [46.603354, 1.888334],
   defaultZoom: 6,
-  // CONFIG.tileProviders is no longer used directly by Leaflet,
-  // but we can map our mapStyle to a URL template in MapComponent.
   tileProviders: {
     satellite: (x, y, z) =>
       `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
@@ -35,6 +33,14 @@ const CountryHome = () => {
   const [notes, setNotes] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [contextMenuLatLng, setContextMenuLatLng] = useState(null);
+  
+  // NEW: State for favorite context menu
+  const [favoriteContextMenu, setFavoriteContextMenu] = useState({
+    visible: false,
+    position: { x: 0, y: 0 },
+    favorite: null,
+  });
+  
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile screen size
@@ -56,6 +62,12 @@ const CountryHome = () => {
   const handleCountryClick = (country) => {
     setSelectedCountry(country);
     setModalVisible(true);
+  };
+
+  const handleFavoriteClick = (favorite) => {
+    setCenter(favorite.latLng);
+    // set the zoom level and keep it there
+    setCurrentZoom(12);
   };
 
   const handleCloseModal = () => {
@@ -189,8 +201,35 @@ const CountryHome = () => {
     setContextMenuVisible(false);
   };
 
+  // NEW: Function to handle left click on a favorite marker icon.
+  // This will trigger the favorite-specific context menu.
+  const handleFavoriteIconClick = (favorite, position) => {
+    setFavoriteContextMenu({
+      visible: true,
+      position,
+      favorite,
+    });
+  };
+
+  // NEW: Remove a favorite based on favoriteContextMenu.favorite
+  const removeFavorite = () => {
+    if (!favoriteContextMenu.favorite) return;
+    const updatedFavorites = favorites.filter(f => f.id !== favoriteContextMenu.favorite.id);
+    setFavorites(updatedFavorites);
+    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    setFavoriteContextMenu({ visible: false, position: { x: 0, y: 0 }, favorite: null });
+  };
+
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div 
+      style={{ position: 'relative', width: '100vw', height: '100vh' }}
+      // Hide the favorite context menu when clicking outside
+      onClick={() => {
+        if (favoriteContextMenu.visible) {
+          setFavoriteContextMenu({ visible: false, position: { x: 0, y: 0 }, favorite: null });
+        }
+      }}
+    >
       {/* Top-left menu button */}
       <motion.div
         initial={{ opacity: 1 }}
@@ -224,6 +263,7 @@ const CountryHome = () => {
           handleMapTypeToggle={handleMapTypeToggle}
           exportNotes={exportNotes}
           importNotes={importNotes}
+          handleFavoriteClick={handleFavoriteClick}
           removeAllNotes={removeAllNotes}
           removeAllFavorites={removeAllFavorites}
           uniqueCountries={uniqueCountries}
@@ -281,14 +321,16 @@ const CountryHome = () => {
         CONFIG={CONFIG}
         countries={countries}
         notes={notes}
+        favorites={favorites}
         onMapClick={handleMapClick}
         setCenter={setCenter}
         setCurrentZoom={setCurrentZoom}
         handleCountryClick={handleCountryClick}
-        favorites={favorites}
+        // NEW: Pass the function to handle favorite icon clicks
+        onFavoriteClick={handleFavoriteIconClick}
       />
 
-      {/* Context Menu for adding notes/favorites */}
+      {/* Context Menu for adding notes/favorites (triggered on map click) */}
       {contextMenuVisible && (
         <div
           style={{
@@ -307,6 +349,28 @@ const CountryHome = () => {
         >
           <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addNote}>New Note</div>
           <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addFavorite}>Mark as Favorite</div>
+        </div>
+      )}
+
+      {/* NEW: Context Menu for favorite markers */}
+      {favoriteContextMenu.visible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: favoriteContextMenu.position.y,
+            left: favoriteContextMenu.position.x,
+            background: '#fff',
+            border: '1px solid #ddd',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+            zIndex: 2000,
+            padding: '10px',
+            borderRadius: '5px',
+            cursor: 'default'
+          }}
+          // Prevent the click from bubbling up and closing the menu immediately
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={removeFavorite}>Delete Favorite</div>
         </div>
       )}
 
