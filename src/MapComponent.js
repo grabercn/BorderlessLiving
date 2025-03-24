@@ -41,9 +41,6 @@ const LeafletMapEvents = ({ onMapClick, setCenter, setCurrentZoom }) => {
       const map = e.target;
       setCenter([map.getCenter().lat, map.getCenter().lng]);
       setCurrentZoom(map.getZoom());
-      if (typeof onMapMove === "function") {
-        onMapMove();
-      }
     },
   });
   return null;
@@ -81,7 +78,7 @@ const MapComponent = ({
   setCenter,
   setCurrentZoom,
   handleCountryClick,
-  onFavoriteClick,
+  onPinClick,
   onMapMove,  // Function to hide context menu on map move
 }) => {
   let tileUrl =
@@ -171,8 +168,8 @@ const MapComponent = ({
                 click: (e) => {
                   e.originalEvent.preventDefault();
                   e.originalEvent.stopPropagation();
-                  if (typeof onFavoriteClick === "function") {
-                    onFavoriteClick(favorite, { x: e.originalEvent.clientX, y: e.originalEvent.clientY });
+                  if (typeof onPinClick === "function") {
+                    onPinClick(pin, { x: e.originalEvent.clientX, y: e.originalEvent.clientY });
                   }
                 }
               }}

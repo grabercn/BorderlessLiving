@@ -60,12 +60,6 @@ const CountryHome = () => {
     setModalVisible(true);
   };
 
-  const handleFavoriteClick = (favorite) => {
-    setCenter(favorite.latLng);
-    // set the zoom level and keep it there
-    setCurrentZoom(12);
-  };
-
   const handleCloseModal = () => {
     setModalVisible(false);
     setSelectedCountry(null);
