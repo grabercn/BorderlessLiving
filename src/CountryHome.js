@@ -6,6 +6,7 @@ import DrawerMenu from './DrawerMenu';
 import MapComponent from './MapComponent';
 import CountryDetail from './CountryDetail';
 import countries from './CountryData';
+import IconSelector from './components/IconSelector';
 import "./site.css";
 
 const CONFIG = {
@@ -32,10 +33,13 @@ const CountryHome = () => {
   const [mapStyle, setMapStyle] = useState('standard');
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [notes, setNotes] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  const [pins, setPins] = useState([]);
   const [contextMenuLatLng, setContextMenuLatLng] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Icon selection state
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
+  const [pendingPin, setPendingPin] = useState(null);
 
   // Detect mobile screen size
   useEffect(() => {
@@ -43,14 +47,6 @@ const CountryHome = () => {
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Load saved notes and favorites from local storage
-  useEffect(() => {
-    const savedNotes = JSON.parse(localStorage.getItem('mapNotes')) || [];
-    const savedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    setFavorites(savedFavorites);
-    setNotes(savedNotes);
   }, []);
 
   const handleCountryClick = (country) => {
@@ -71,51 +67,17 @@ const CountryHome = () => {
     return acc;
   }, []);
 
-  // Export and import notes functions
-  const exportNotes = () => {
-    const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'map-notes.json';
-    a.click();
-  };
-
-  const removeAllNotes = () => {
-    setNotes([]);
-    localStorage.setItem('mapNotes', JSON.stringify([]));
-  };
-
-  const removeAllFavorites = () => {
-    setFavorites([]);
-    localStorage.setItem('favorites', JSON.stringify([]));
-  };
-
-  const importNotes = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.type !== "application/json") {
-      alert("Please select a valid JSON file.");
-      return;
+  // Load pins from local storage
+  useEffect(() => {
+    const savedPins = JSON.parse(localStorage.getItem('pins'));
+    if (savedPins) {
+      setPins(savedPins);
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const importedNotes = JSON.parse(event.target.result);
-        if (!Array.isArray(importedNotes)) {
-          throw new Error("Invalid file format: Expected an array of notes.");
-        }
-        setNotes(importedNotes);
-        localStorage.setItem('mapNotes', JSON.stringify(importedNotes));
-      } catch (err) {
-        console.error("Error importing notes:", err);
-        alert("Failed to import notes. Please ensure the file is valid and correctly formatted.");
-      }
-    };
-    reader.onerror = () => {
-      alert("Error reading file. Please try again.");
-    };
-    reader.readAsText(file);
+  }, []);
+
+  const removeAllPins = () => {
+    setPins([]);
+    localStorage.setItem('pins', JSON.stringify([]));
   };
 
   // Toggle map type between standard, satellite and simplified
@@ -144,49 +106,38 @@ const CountryHome = () => {
     setContextMenuVisible(true);
   };
 
-  // Add a new note at the clicked position, grouping overlapping notes
-  const addNote = () => {
+  // When adding a pin, open the icon selector and save the pending pin data
+  const addPin = () => {
     if (!contextMenuLatLng) return;
-    let stackId = null;
-    const toleranceBase = 0.05;
-    const adjustedTolerance = toleranceBase * (currentZoom / 4);
-    const overlappingNotes = notes.filter(note => {
-      const latDiff = Math.abs(note.latLng[0] - contextMenuLatLng[0]);
-      const lngDiff = Math.abs(note.latLng[1] - contextMenuLatLng[1]);
-      return latDiff < adjustedTolerance && lngDiff < adjustedTolerance;
-    });
-    if (overlappingNotes.length > 0) {
-      stackId = overlappingNotes[0].stackId;
-    } else {
-      stackId = Date.now();
-    }
-    const newNote = {
+    
+    // Save the pending pin's position but don't add it yet
+    setPendingPin({
       id: Date.now(),
       latLng: contextMenuLatLng,
-      text: "New note",
+      text: "New pin",
       date: new Date().toLocaleString(),
-      stackId,
-    };
-    const updatedNotes = [...notes, newNote];
-    setNotes(updatedNotes);
-    localStorage.setItem('mapNotes', JSON.stringify(updatedNotes));
-    setContextMenuVisible(false);
+    });
+
+    // Open the icon picker modal
+    setIconPickerVisible(true);
   };
 
-  // Add a favorite at the clicked position
-  const addFavorite = () => {
-    if (!contextMenuLatLng) return;
-    const newFavorite = {
-      id: Date.now(),
-      latLng: contextMenuLatLng,
-      text: "New favorite",
-      icon: 'star',
-      date: new Date().toLocaleString(),
-    };
-    const updatedFavorites = [...favorites, newFavorite];
-    setFavorites(updatedFavorites);
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+  // Handle the icon selected from IconSelector.
+  // Expects icon to be an object with { name, color }.
+  const handleIconSelect = (icon) => {
+    if (!pendingPin) return;
+
+    // Add the pin with the selected icon details
+    const newPin = { ...pendingPin, icon };
+    const updatedPins = [...pins, newPin];
+    
+    setPins(updatedPins);
+    localStorage.setItem('pins', JSON.stringify(updatedPins));
+
+    // Close modals and reset state
+    setIconPickerVisible(false);
     setContextMenuVisible(false);
+    setPendingPin(null);
   };
 
   return (
@@ -222,17 +173,13 @@ const CountryHome = () => {
           isMobile={isMobile}
           mapStyle={mapStyle}
           handleMapTypeToggle={handleMapTypeToggle}
-          exportNotes={exportNotes}
-          importNotes={importNotes}
-          removeAllNotes={removeAllNotes}
-          removeAllFavorites={removeAllFavorites}
+          removeAllPins={removeAllPins}
           uniqueCountries={uniqueCountries}
           handleCountryClick={(country) => {
             setDrawerVisible(false);
             handleCountryClick(country);
           }}
-          favorites={favorites}
-          notes={notes}
+          pins={pins}
           onCloseDrawer={() => setDrawerVisible(false)}
         />
       </Drawer>
@@ -280,15 +227,14 @@ const CountryHome = () => {
         mapStyle={mapStyle}
         CONFIG={CONFIG}
         countries={countries}
-        notes={notes}
         onMapClick={handleMapClick}
         setCenter={setCenter}
         setCurrentZoom={setCurrentZoom}
         handleCountryClick={handleCountryClick}
-        favorites={favorites}
+        pins={pins}
       />
 
-      {/* Context Menu for adding notes/favorites */}
+      {/* Context Menu for adding Community Pins */}
       {contextMenuVisible && (
         <div
           style={{
@@ -305,10 +251,18 @@ const CountryHome = () => {
           }}
           onClick={() => setContextMenuVisible(false)}
         >
-          <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addNote}>New Note</div>
-          <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addFavorite}>Mark as Favorite</div>
+          <div style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={addPin}>
+            Add Community Pin
+          </div>
         </div>
       )}
+
+      {/* Icon Selector Modal */}
+      <IconSelector
+        visible={iconPickerVisible}
+        onSelect={handleIconSelect}
+        onCancel={() => setIconPickerVisible(false)}
+      />
 
       {/* Country Detail Modal */}
       <Modal

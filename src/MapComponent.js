@@ -3,7 +3,33 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import ReactDOMServer from 'react-dom/server';
-import { EnvironmentTwoTone, StarTwoTone } from '@ant-design/icons';
+import { 
+  EnvironmentTwoTone, 
+  HeartTwoTone, 
+  StarTwoTone, 
+  SmileTwoTone, 
+  FrownTwoTone, 
+  CheckCircleTwoTone, 
+  CloseCircleTwoTone, 
+  InfoCircleTwoTone, 
+  ExclamationCircleTwoTone, 
+  PushpinTwoTone, 
+  ThunderboltTwoTone 
+} from '@ant-design/icons';
+
+// Map icon name to component for the 10 popular two-tone icons.
+const iconMap = {
+  HeartTwoTone,
+  StarTwoTone,
+  SmileTwoTone,
+  FrownTwoTone,
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  InfoCircleTwoTone,
+  ExclamationCircleTwoTone,
+  PushpinTwoTone,
+  ThunderboltTwoTone,
+};
 
 // A helper component to listen to map events
 const LeafletMapEvents = ({ onMapClick, setCenter, setCurrentZoom }) => {
@@ -48,8 +74,7 @@ const MapComponent = ({
   mapStyle,
   CONFIG,
   countries,
-  notes,
-  favorites,
+  pins,
   onMapClick,
   setCenter,
   setCurrentZoom,
@@ -78,7 +103,7 @@ const MapComponent = ({
     }
   }, [setCenter]);
 
-  // We'll compute a common icon size for current location & favorites markers
+  // Compute common icon size for pin/current location markers.
   const currentIconSize = 24 * (currentZoom / 4);
 
   return (
@@ -113,43 +138,14 @@ const MapComponent = ({
         );
       })}
 
-      {/* Render note markers */}
-      {notes.map((note) => {
-        const stackedNotes = notes.filter((n) => n.stackId === note.stackId);
-        const stackCount = stackedNotes.length;
-        const isLatestNote = note.id === stackedNotes[stackedNotes.length - 1].id;
-        const showAllNotes = currentZoom >= 0; // always true in this case
-        const shouldShowLatestOnly = !showAllNotes && stackCount > 1 && !isLatestNote;
-        const shouldShowNote = showAllNotes || !shouldShowLatestOnly;
-        const groupColor = `hsl(${(note.stackId * 50) % 360}, 70%, 60%)`;
-        const noteSize = Math.max(14, 10 + (currentZoom / 4));
-        let noteHtml = `<div style="background:#ffffff; border:1px solid #ddd; padding:10px; border-radius:8px; font-size:${noteSize}px; max-width:150px; box-shadow:0 2px 5px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: all 0.2s ease;">
-          <div style="font-weight:bold; color:#333;">${note.date}</div>
-          <div style="color:#666; margin-bottom:5px;">${note.text}</div>`;
-        if (stackCount > 1 && isLatestNote) {
-          noteHtml += `<div style="position:absolute; top:5px; right:5px; background:${groupColor}; color:white; font-size:10px; width:20px; height:20px; border-radius:50%; text-align:center; line-height:20px; z-index:3000; font-weight:bold; box-shadow:0 2px 3px rgba(0,0,0,0.2); transform:translate(25%, -25%); transition: all 0.2s ease-in-out;">${stackCount}</div>`;
-        }
-        if (stackCount > 1 && !isLatestNote) {
-          noteHtml += `<div style="position:absolute; top:5px; right:5px; background:#fff; color:${groupColor}; font-size:10px; width:18px; height:18px; border-radius:50%; text-align:center; line-height:18px; z-index:3000; font-weight:bold; border:1px solid ${groupColor}; transition: all 0.2s ease;">${stackedNotes.indexOf(note) + 1}</div>`;
-        }
-        noteHtml += `</div>`;
-        return shouldShowNote ? (
-          <Marker
-            key={note.id}
-            position={note.latLng}
-            icon={createDivIcon(noteHtml, 150, 150)}
-            eventHandlers={{
-              click: (e) => e.originalEvent.stopPropagation(),
-            }}
-          />
-        ) : null;
-      })}
-
-      {/* Render favorite markers */}
-      {favorites &&
-        favorites.map((favorite) => {
+      {/* Render pin markers */}
+      {pins &&
+        pins.map((pin) => {
           const iconSize = 24 * (currentZoom / 4);
-          const favoriteElement = (
+          // Use the icon component from the mapping based on the pin's icon name.
+          // If not found, fallback to StarTwoTone.
+          const IconComponent = iconMap[pin.icon?.name] || StarTwoTone;
+          const pinElement = (
             <div
               style={{
                 width: iconSize + 16,
@@ -161,14 +157,14 @@ const MapComponent = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              <StarTwoTone twoToneColor="#Ffd700" style={{ fontSize: iconSize, transition: 'all 0.2s ease' }} />
+              <IconComponent twoToneColor={pin.icon?.color || "#Ffd700"} style={{ fontSize: iconSize, transition: 'all 0.2s ease' }} />
             </div>
           );
-          const html = ReactDOMServer.renderToString(favoriteElement);
+          const html = ReactDOMServer.renderToString(pinElement);
           return (
             <Marker
-              key={favorite.id}
-              position={favorite.latLng}
+              key={pin.id}
+              position={pin.latLng}
               icon={createDivIcon(html, iconSize + 16, iconSize + 16)}
             />
           );
