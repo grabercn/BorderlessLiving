@@ -12,8 +12,6 @@ import "./site.css";
 const CONFIG = {
   defaultCenter: [46.603354, 1.888334],
   defaultZoom: 6,
-  // CONFIG.tileProviders is no longer used directly by Leaflet,
-  // but we can map our mapStyle to a URL template in MapComponent.
   tileProviders: {
     satellite: (x, y, z) =>
       `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
@@ -35,6 +33,14 @@ const CountryHome = () => {
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [pins, setPins] = useState([]);
   const [contextMenuLatLng, setContextMenuLatLng] = useState(null);
+  
+  // NEW: State for favorite context menu
+  const [favoriteContextMenu, setFavoriteContextMenu] = useState({
+    visible: false,
+    position: { x: 0, y: 0 },
+    favorite: null,
+  });
+  
   const [isMobile, setIsMobile] = useState(false);
   
   // Icon selection state
@@ -52,6 +58,12 @@ const CountryHome = () => {
   const handleCountryClick = (country) => {
     setSelectedCountry(country);
     setModalVisible(true);
+  };
+
+  const handleFavoriteClick = (favorite) => {
+    setCenter(favorite.latLng);
+    // set the zoom level and keep it there
+    setCurrentZoom(12);
   };
 
   const handleCloseModal = () => {
@@ -141,7 +153,15 @@ const CountryHome = () => {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div 
+      style={{ position: 'relative', width: '100vw', height: '100vh' }}
+      // Hide the favorite context menu when clicking outside
+      onClick={() => {
+        if (favoriteContextMenu.visible) {
+          setFavoriteContextMenu({ visible: false, position: { x: 0, y: 0 }, favorite: null });
+        }
+      }}
+    >
       {/* Top-left menu button */}
       <motion.div
         initial={{ opacity: 1 }}
